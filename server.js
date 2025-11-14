@@ -33,15 +33,15 @@ const sites = {
     }
 };
 
-// دالة استخراج الرابط - معدلة للـ Render
+// دالة استخراج الرابط - معدلة لـ HiddenCloud
 async function extractDownloadLink(fullUrl, referer, site) {
     console.log('🚀 Starting bypass for:', fullUrl, 'Site:', site);
     
     let browser;
     try {
-        // إعدادات Puppeteer للـ Render
+        // إعدادات Puppeteer لـ HiddenCloud
         const browserConfig = {
-            headless: true, // دائماً headless في السيرفر
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -49,15 +49,10 @@ async function extractDownloadLink(fullUrl, referer, site) {
                 '--disable-accelerated-2d-canvas',
                 '--no-first-run',
                 '--no-zygote',
-                '--disable-gpu',
-                '--single-process'
+                '--single-process',
+                '--disable-gpu'
             ]
         };
-
-        // إذا كان في Render، أضف إعدادات إضافية
-        if (process.env.RENDER) {
-            browserConfig.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-        }
 
         browser = await puppeteer.launch(browserConfig);
         const page = await browser.newPage();
@@ -74,12 +69,13 @@ async function extractDownloadLink(fullUrl, referer, site) {
 
         console.log('🌐 Navigating to:', fullUrl);
         
+        // الانتقال للصفحة مع معالجة أخطاء محسنة
         await page.goto(fullUrl, {
-            waitUntil: 'networkidle0',
+            waitUntil: 'domcontentloaded',
             timeout: 30000
         });
 
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 4000));
         
         // استخراج الرابط
         const downloadUrl = await page.evaluate(() => {
@@ -131,7 +127,6 @@ app.post('/api/bypass', async (req, res) => {
 
     console.log('📥 Received request - Site:', site, 'Path:', urlPath);
 
-    // التحقق من البيانات
     if (!site || !urlPath) {
         return res.status(400).json({ 
             success: false, 
@@ -182,12 +177,18 @@ app.get('/', (req, res) => {
     res.sendFile(join(__dirname, 'public', 'index.html'));
 });
 
-// health check endpoint
+// health check endpoint مهم لـ HiddenCloud
 app.get('/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+    res.json({ 
+        status: 'OK', 
+        service: 'URL Bypass API',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
 });
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('✅ Ready for HiddenCloud deployment');
 });
